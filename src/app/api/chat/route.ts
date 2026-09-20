@@ -9,6 +9,7 @@ import {
 } from "ai";
 import { google } from "@ai-sdk/google";
 import { z } from "zod";
+import { db } from "@/db/db";
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
@@ -16,19 +17,22 @@ export async function POST(req: Request) {
   const SYSTEM_PROMPT = `You are an expert SQL assistant that helps users to query their database using natural
                         language.
 
+      ${new Date().toLocaleString("sv-SE")}
+
     You have access to following tools:
         1. db tool - call this tool to query the database.
         2. schema tool - call this tool to get database schema which will help you to write query.
 
     Rules:
         - Generate ONLY SELECT queries (no INSERT, UPDATE, DELETE, DROP) 
-        - Always use the schema provided by the schema tool 
-        - Return valid SQLite syntax
+        - Only call the schema tool when you need to write a database query. 
+        - Pass in valid SQL syntax in db tool.
+        - IMPORTANT : To query database call db tool, Don't reutrn sql query.
 
     Always respond in a helpful, conversational tone while being technically accurate.`;
 
   const result = streamText({
-    model: google("gemini-3.7-flash"),
+    model: google("gemini-3.5-flash"),
     instructions: SYSTEM_PROMPT,
     stopWhen: stepCountIs(5),
     tools: {
@@ -39,13 +43,14 @@ export async function POST(req: Request) {
         }),
         execute: async ({ query }) => {
           console.log("Our Query :", query);
-          return query;
+          // check query before giving it to the database
+          return await db.run(query);
         },
       }),
       schema: tool({
         description: "Call this tool to get databse schema information.",
         inputSchema: z.object({}),
-        execute: async ({}) => {
+        execute: async ({ }) => {
           return `CREATE TABLE products (
                         id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
                         name text NOT NULL,
