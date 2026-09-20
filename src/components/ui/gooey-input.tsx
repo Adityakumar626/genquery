@@ -153,8 +153,12 @@ export function GooeyInput({
 
   const buttonVariants = useMemo(
     () => ({
-      collapsed: { width: collapsedWidth, marginLeft: 0 },
-      expanded: { width: expandedWidth, marginLeft: expandedOffset },
+      collapsed: { width: collapsedWidth, maxWidth: "100%", marginLeft: 0 },
+      expanded: { 
+        width: expandedWidth, 
+        maxWidth: `calc(100% - ${expandedOffset}px)`,
+        marginLeft: expandedOffset 
+      },
     }),
     [collapsedWidth, expandedWidth, expandedOffset],
   );
@@ -180,7 +184,7 @@ export function GooeyInput({
   return (
     <div
       className={cn(
-        "relative flex items-center justify-center",
+        "relative flex items-center justify-center w-full",
         className,
         classNames?.root,
       )}
@@ -189,13 +193,13 @@ export function GooeyInput({
 
       <div
         className={cn(
-          "relative flex h-10 items-center justify-center",
+          "relative flex h-10 items-center justify-center w-full",
           classNames?.filterWrap,
         )}
         style={{ filter: `url(#${filterId})` }}
       >
         <motion.div
-          className={cn("flex h-10 items-center justify-center", classNames?.buttonRow)}
+          className={cn("flex h-10 items-center justify-center w-full", classNames?.buttonRow)}
           variants={buttonVariants}
           initial="collapsed"
           animate={isExpanded ? "expanded" : "collapsed"}
